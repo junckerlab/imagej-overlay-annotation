@@ -12,12 +12,15 @@ from os.path import join as pj
 from os.path import split as ps
 import sys
 import errno
+from glob import glob
 
 infile = sys.argv[1]
 copy_dir = "./nb"
 
 with open(infile, 'r') as f:
     ids = [line.strip() +'-rgb.tif' for line in f]
+
+# Look for any permutations of each im ID
 
 if not os.path.exists(copy_dir):
     os.mkdir(copy_dir)
@@ -30,11 +33,24 @@ def force_symlink(src, dst):
             os.remove(dst)
             os.symlink(src, dst)
 
-try:
+def main():
+    infile = sys.argv[1]
+    copy_dir = "nb"
+    glob_suffix = '-rgb*.tif' 
+
+    with open(infile, 'r') as f:
+        ids = [line.strip() for line in f]
+
+    # Look for any permutations of each im ID
+
+    if not os.path.exists(copy_dir):
+        os.mkdir(copy_dir)
+
     for i in ids:
-        src = os.path.abspath(i)
-        dst = pj(ps(src)[0], copy_dir, i)
-        force_symlink(src, dst)
-    print('Created symlinks for file IDs in', infile)
-except:
-    print('BIG PROBLEM: failed to create symlinks')
+        for im in glob(i+glob_suffix):
+            src = os.path.abspath(im)
+            dst = pj(ps(src)[0], copy_dir, im)
+            force_symlink(src, dst)
+
+
+main()
