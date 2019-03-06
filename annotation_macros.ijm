@@ -25,13 +25,14 @@ macro "Save ROI List [f1]" {
  * From/To overlay cycle it adds an extra set of objects into the ROI
  */ 
 macro "ROIs to Overlay [T]" {
-	// We're overriding something?
+	// Overrides any previous overlay :( 
 	run("From ROI Manager");
 	roiManager("Show None");
+	run("Labels...", "color=white font=12 show use draw");
 }
 
 macro "ROIs from Overlay [F]" {
-	// We're overriding Flatten
+	// "Flatten", override any prev ROI?
 	run("To ROI Manager");
 	roiManager("Show All");
 }
