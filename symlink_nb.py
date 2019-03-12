@@ -13,17 +13,14 @@ from os.path import split as ps
 import sys
 import errno
 from glob import glob
+import argparse
 
-infile = sys.argv[1]
-copy_dir = "./nb"
-
-with open(infile, 'r') as f:
-    ids = [line.strip() +'-rgb.tif' for line in f]
-
-# Look for any permutations of each im ID
-
-if not os.path.exists(copy_dir):
-    os.mkdir(copy_dir)
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('infile', type=str, help='File containing im ids')
+    parser.add_argument('-d', '--linkdir', type=str, default='nb', 
+                        help='Name of the dir to create for symlinks (def: nb)')
+    return parser.parse_args()
 
 def force_symlink(src, dst):
     try:
@@ -34,8 +31,9 @@ def force_symlink(src, dst):
             os.symlink(src, dst)
 
 def main():
-    infile = sys.argv[1]
-    copy_dir = "nb"
+    args = parse_args()
+    infile = args.infile
+    copy_dir = args.linkdir
     glob_suffix = '-rgb*.tif' 
 
     with open(infile, 'r') as f:
