@@ -1,8 +1,8 @@
-- [`merge_roi_lists.py`](#merge_roi_lists.py)
-- [`symlink_nb.py`](#symlink_nb.py)
+- [`merge_roi_lists.py`](#merge_roi_lists)
+- [`symlink_nb.py`](#symlink_nb)
 
 ----
-# symlink_nb.py
+# symlink_nb
 
 Read image IDs from a txt file (positional arg) and symlink them to a
 subdir (./nb) for more convinient annotation. The txt file should contain a
@@ -19,7 +19,7 @@ Example file contents:
 Useage: `nb.py nb_file_ids.txt`
 
 ----
-# merge_roi_lists.py
+# merge_roi_lists
 Merge and process ImageJ ROI tables (read from csv files)
 
 ### Processing:
