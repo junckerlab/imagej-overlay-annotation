@@ -18,6 +18,45 @@ import os
 import pandas as pd
 from glob import glob
 import tifffile as tf
+import argparse
+
+# TODO
+# argparse, read csv files or read directory
+
+def main(args):
+    """
+    args.roi_files : list or str, filename(s) of imagej roi table csv(s) to read
+    args.save_table : bool, write roi table to a csv file
+    merged_args.roi_files : str, filename of the output table
+    args.crop_path : str, path to save crops: 'args.crop_path/label/<croped_ims>'
+    """
+    df = merge_roi_lists(args.roi_files, save=args.save_table, outfile=args.table_name)
+    unique_labels = df['Name'].unique()
+    for l in unique_labels:
+        # TODO what if this path is not empty?
+        path = os.path.join(args.crop_path, l)
+        if not os.path.exists(path):
+            os.makedirs(path)
+    
+    if args.crop:
+        for i in range(len(df)):
+            row = df.iloc[i]
+            if type(row['Cropbox']) is list and len(row['Cropbox']) is 4:
+                # then it probably isn't something unexpected
+                crop_images(row, args.crop_path)
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument('roi_files', nargs='+', 
+                    help='One or more csv files to read and merge/crop from')
+    p.add_argument('--crop', action='store_true', dest='crop',
+                   help='Save cropped pngs of each ROI to crop_path (def: off)')
+    p.add_argument('--crop_path', default='cropped')
+    p.add_argument('-n', '--table_name', default='merged_roi_table.csv')
+    p.add_argument('--no_table', action='store_true', dest='save_table',
+                  help='Do not save a the merged roi only (eg only do crops)')
+    p.set_defaults(save_table=True, crop=False)
+    return p.parse_args()
 
 def merge_roi_lists(fname, save=True, outfile='roi_list_merged.csv'):
     """ Merge and process ImageJ ROI tables (read from csv files)
@@ -111,9 +150,12 @@ def merge_roi_lists(fname, save=True, outfile='roi_list_merged.csv'):
         # We have multiple roi tables to merge
         df_ls = []
         for f in fname:
-            df = pd.read_csv(f)
-            df = assign_columns(f, df)
-            df_ls.append(df)
+            try:
+                df = pd.read_csv(f)
+                df = assign_columns(f, df)
+                df_ls.append(df)
+            except pd.errors.EmptyDataError:
+                print('csv file %s was empty, skipping' %f)
         df = pd.concat(df_ls)
     else: 
         raise Exception('roi list filename was not of type string or list')
@@ -188,27 +230,6 @@ def crop_images(row, crop_path):
     crop_file = os.path.join(crop_path, row['Name'], row['UID'])
     tiffwrite(crop_file, im_crop)
 
-### Main
-
-def main(roi_csv, save_table=True, table_name='merged_roi_table.csv',
-        crop_path='cropped'):
-    """
-    roi_csv : list or str, filename(s) of imagej roi table csv(s) to read
-    save_table : bool, write roi table to a csv file
-    merged_roi_csv : str, filename of the output table
-    crop_path : str, path to save crops: 'crop_path/label/<croped_ims>'
-    """
-    df = merge_roi_lists(roi_csv, save=save_table, outfile=table_name)
-    unique_labels = df['Name'].unique()
-    for l in unique_labels:
-        # TODO what if this path is not empty?
-        path = os.path.join(crop_path, l)
-        if not os.path.exists(path):
-            os.makedirs(path)
-    
-    for i in range(len(df)):
-        row = df.iloc[i]
-        if type(row['Cropbox']) is list and len(row['Cropbox']) is 4:
-            # then it probably isn't something unexpected
-            crop_images(row, crop_path)
-
+if __name__ == '__main__':
+    args = parse_args()
+    main(args)
